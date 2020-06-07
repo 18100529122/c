@@ -1,0 +1,429 @@
+#include<stdio.h>
+#include <stdlib.h>
+#include<time.h>
+#include<queue>
+#include<string>
+#include <set>
+using namespace std;
+//每一个小方块
+int SmallCube[7][3] = {
+	13,14,20,
+	21,15,16,
+	17,18,23,
+	 2, 5, 6,
+	 3, 7, 8,
+	 1, 9,10,
+	 0, 4,11
+};
+
+struct Cube{
+	int A[24];
+	string Total;
+	int count;
+}C;
+
+
+bool OneWallIsWell(Cube C, int a, int b, int c, int d);
+bool CubeIsWell(Cube C);
+int CountWallIsWell(Cube C);
+Cube Rotate(Cube C, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, bool Direction);
+Cube U(Cube C);
+Cube _U(Cube C);
+Cube R(Cube C);
+Cube _R(Cube C);
+Cube F(Cube C);
+Cube _F(Cube C);
+void ShowCube(Cube C);
+Cube CreatCube();
+
+//Cube bfs_Button(Cube C);
+
+bool InspectButton1(Cube C);
+bool InspectButton2(Cube C);
+bool InspectButton3(Cube C);
+
+/*
+           0  1 
+		   2  3
+	 4  5  6  7  8  9 10 11
+    12 13 14 15 16 17 18 19
+	      20 21
+		  22 23
+*/
+bool OneWallIsWell(Cube C, int a,int b,int c,int d){
+	if (C.A[a] == C.A[b] && C.A[a] == C.A[c] && C.A[a] == C.A[d]) return true;
+	return false;
+}
+bool CubeIsWell(Cube C){
+	if (                              
+		OneWallIsWell(C, 0, 1, 2, 3) 
+     && OneWallIsWell(C, 4, 5, 12, 13) 
+     && OneWallIsWell(C, 6, 7, 14, 15)
+     && OneWallIsWell(C, 8, 9, 16, 17)
+     && OneWallIsWell(C, 10, 11, 18, 19)              
+     && OneWallIsWell(C, 20, 21, 22, 23))     return true;
+	return false;
+}
+int CountWallIsWell(Cube C){
+	return OneWallIsWell(C, 0, 1, 2, 3) 
+		+ OneWallIsWell(C, 4, 5, 12, 13)
+		+ OneWallIsWell(C, 6, 7, 14, 15) 
+		+ OneWallIsWell(C, 8, 9, 16, 17) 
+		+ OneWallIsWell(C, 10, 11, 18, 19) 
+		+ OneWallIsWell(C, 20, 21, 22, 23);
+}
+Cube Rotate(Cube C, int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l,bool Direction){
+	if (Direction){//顺时针
+		//面
+		int t = C.A[a];
+		C.A[a] = C.A[d];
+		C.A[d] = C.A[c];
+		C.A[c] = C.A[b];
+		C.A[b] = t;
+		//环
+		int t1 = C.A[e], t2 = C.A[f];
+		C.A[e] = C.A[k]; C.A[f] = C.A[l];
+		C.A[k] = C.A[i]; C.A[l] = C.A[j];
+		C.A[i] = C.A[g]; C.A[j] = C.A[h];
+		C.A[g] = t1; C.A[h] = t2;
+	}
+	else{//逆时针
+		//面
+		int t = C.A[a];
+		C.A[a] = C.A[b];
+		C.A[b] = C.A[c];
+		C.A[c] = C.A[d];
+		C.A[d] = t;
+		//环
+		int t1 = C.A[e], t2 = C.A[f];
+		C.A[e] = C.A[g]; C.A[f] = C.A[h];
+		C.A[g] = C.A[i]; C.A[h] = C.A[j];
+		C.A[i] = C.A[k]; C.A[j] = C.A[l];
+		C.A[k] = t1; C.A[l] = t2;
+	}
+	return C;
+}
+Cube U(Cube C){
+	return Rotate(C, 0, 1, 3, 2, 5, 4, 11, 10, 9, 8, 7, 6, 1);
+}
+Cube _U(Cube C){
+	return Rotate(C, 0, 1, 3, 2, 5, 4, 11, 10, 9, 8, 7, 6, 0);
+}
+Cube R(Cube C){
+	return Rotate(C, 8, 9, 17, 16, 15, 7, 3, 1, 10, 18, 23, 21, 1);
+}
+Cube _R(Cube C){
+	return Rotate(C, 8, 9, 17, 16, 15, 7, 3, 1, 10, 18, 23, 21, 0);
+}
+Cube F(Cube C){
+	return Rotate(C, 6, 7, 15, 14, 13, 5, 2, 3, 8, 16, 21, 20, 1);
+}
+Cube _F(Cube C){
+	return Rotate(C, 6, 7, 15, 14, 13, 5, 2, 3, 8, 16, 21, 20, 0);
+}
+void ShowCube(Cube C){
+	printf("      %d  %d\n      %d  %d\n", C.A[0], C.A[1], C.A[2], C.A[3]);
+	printf("%d  %d  %d  %d  ", C.A[4], C.A[5], C.A[6], C.A[7]); printf("%d  %d  %d  %d\n", C.A[8], C.A[9], C.A[10], C.A[11]);
+	printf("%d  %d  %d  %d  ", C.A[12], C.A[13], C.A[14], C.A[15]); printf("%d  %d  %d  %d\n", C.A[16], C.A[17], C.A[18], C.A[19]);
+	printf("      %d  %d\n      %d  %d\n", C.A[20], C.A[21], C.A[22], C.A[23]);
+}
+Cube CreatCube(){
+	Cube C;
+	C.A[0] = 0; C.A[1] = 0; C.A[2] = 0; C.A[3] = 0;
+	C.A[4] = 1; C.A[5] = 1; C.A[12] = 1; C.A[13] = 1;
+	C.A[6] = 2; C.A[7] = 2; C.A[14] = 2; C.A[15] = 2;
+	C.A[8] = 3; C.A[9] = 3; C.A[16] = 3; C.A[17] = 3;
+	C.A[10] = 4; C.A[11] = 4; C.A[18] = 4; C.A[19] = 4;
+	C.A[20] = 5; C.A[21] = 5; C.A[22] = 5; C.A[23] = 5;
+	C.Total.clear();
+	int count = rand() % 50;
+	for (int i = 0; i < count; i++){
+		int rotate = rand() % 6;
+		switch (rotate)
+		{
+		case 0:C = U(C);
+			break;
+		case 1:C = _U(C);
+			break;
+		case 2:C = R(C);
+			break;
+		case 3:C = _R(C);
+			break;
+		case 4:C = F(C);
+			break;
+		case 5:C = _F(C);
+			break;
+		}
+	}
+	printf("\n");
+	//记录count
+	C.count = 0;
+	InspectButton1(C);
+	InspectButton2(C);
+	InspectButton3(C);
+	ShowCube(C);
+	return C;
+}
+
+//bfs
+/*Cube bfs_Button(Cube C){
+		queue<Cube>q;
+		q.push(C);
+		Cube C1, C2;
+		C1 = q.front();
+		//底面拼好
+		while (C1.count == 0||C1.count==1||C1.count==2)
+		{
+			C1 = q.front();//获取queue首元素
+			q.pop();//弹出队列的第一个元素，注意，并不会返回被弹出元素的值。
+			//U
+			//
+			//
+			//
+			C2 = U(C1);
+			C2.Total=C1.Total+"U";
+				//没有拼成第一块，先储存起来；
+			if(C1.count==0){
+					   if (InspectButton1(C2)){
+						   if (!q.empty())q.pop();//拼成第一块,清空队列
+					   }
+					   q.push(C2);
+			}
+				//第一块依旧保存，储存
+			if(C1.count==1){
+				printf("第一块拼成\n");
+					   if (InspectButton1(C2)){
+						   C2.count--;
+						   if (InspectButton2(C2)){
+							   if (!q.empty())q.pop(); // 拼成第二块, 且第一块不变，清空队列
+						   }
+						   q.push(C2);
+					   }
+			}
+				//第二块依旧保存，储存
+			if(C1.count==2){
+				printf("第二块拼成\n");
+					   if (InspectButton1(C2) && InspectButton2(C2)){
+						   C2.count--;
+						   C2.count--;
+						   if (InspectButton3(C2)){
+							   if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+						   }
+						   q.push(C2);
+						   return C2;
+					   }
+			}
+			//_U
+			//
+			//
+			//
+			C2 = _U(C1);
+			C2.Total = C1.Total + "u";
+			//没有拼成第一块，先储存起来；
+			if (C1.count == 0){
+				if (InspectButton1(C2)){
+					if (!q.empty())q.pop();//拼成第一块,清空队列
+				}
+				q.push(C2);
+			}
+			//第一块依旧保存，储存
+			if (C1.count == 1){
+				if (InspectButton1(C2)){
+					C2.count--;
+					if (InspectButton2(C2)){
+						if (!q.empty())q.pop();//拼成第二块,且第一块不变，清空队列
+					}
+					q.push(C2);
+				}
+			}
+			//第二块依旧保存，储存
+			if (C1.count == 2){
+				if (InspectButton1(C2) && InspectButton2(C2)){
+					C2.count--;
+					C2.count--;
+					if (InspectButton3(C2)){
+						if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+					}
+					q.push(C2);
+					return C2;
+				}
+			}
+			//R
+			//
+			//
+			//
+			C2 = R(C1);
+			C2.Total = C1.Total + "R";
+			//没有拼成第一块，先储存起来；
+			if (C1.count == 0){
+				if (InspectButton1(C2)){
+					if (!q.empty())q.pop();//拼成第一块,清空队列
+				}
+				q.push(C2);
+			}
+			//第一块依旧保存，储存
+			if (C1.count == 1){
+				if (InspectButton1(C2)){
+					C2.count--;
+					if (InspectButton2(C2)){
+						if (!q.empty())q.pop();//拼成第二块,且第一块不变，清空队列
+					}
+					q.push(C2);
+				}
+			}
+			//第二块依旧保存，储存
+			if (C1.count == 2){
+				if (InspectButton1(C2) && InspectButton2(C2)){
+					C2.count--;
+					C2.count--;
+					if (InspectButton3(C2)){
+						if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+					}
+					q.push(C2);
+					return C2;
+				}
+			}
+			//_R
+			//
+			//
+			//
+			C2 = _R(C1);
+			C2.Total = C1.Total + "r";
+			//没有拼成第一块，先储存起来；
+			if (C1.count == 0){
+				if (InspectButton1(C2)){
+					if (!q.empty())q.pop();//拼成第一块,清空队列
+				}
+				q.push(C2);
+			}
+			//第一块依旧保存，储存
+			if (C1.count == 1){
+				if (InspectButton1(C2)){
+					C2.count--;
+					if (InspectButton2(C2)){
+						if (!q.empty())q.pop();//拼成第二块,且第一块不变，清空队列
+					}
+					q.push(C2);
+				}
+			}
+			//第二块依旧保存，储存
+			if (C1.count == 2){
+				if (InspectButton1(C2) && InspectButton2(C2)){
+					C2.count--;
+					C2.count--;
+					if (InspectButton3(C2)){
+						if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+					}
+					q.push(C2);
+					return C2;
+				}
+			}
+			//F
+			//
+			//
+			//
+			C2 = F(C1);
+			C2.Total = C1.Total + "F";
+			//没有拼成第一块，先储存起来；
+			if (C1.count == 0){
+				if (InspectButton1(C2)){
+					if (!q.empty())q.pop();//拼成第一块,清空队列
+				}
+				q.push(C2);
+			}
+			//第一块依旧保存，储存
+			if (C1.count == 1){
+				if (InspectButton1(C2)){
+					C2.count--;
+					if (InspectButton2(C2)){
+						if (!q.empty())q.pop();//拼成第二块,且第一块不变，清空队列
+					}
+					q.push(C2);
+				}
+			}
+			//第二块依旧保存，储存
+			if (C1.count == 2){
+				if (InspectButton1(C2) && InspectButton2(C2)){
+					C2.count--;
+					C2.count--;
+					if (InspectButton3(C2)){
+						if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+					}
+					q.push(C2);
+					return C2;
+				}
+			}
+			//_F
+			//
+			//
+			//
+			C2 = _F(C1);
+			C2.Total = C1.Total + "f";
+			//没有拼成第一块，先储存起来；
+			if (C1.count == 0){
+				if (InspectButton1(C2)){
+					if (!q.empty())q.pop();//拼成第一块,清空队列
+				}
+				q.push(C2);
+			}
+			//第一块依旧保存，储存
+			if (C1.count == 1){
+				if (InspectButton1(C2)){
+					C2.count--;
+					if (InspectButton2(C2)){
+						if (!q.empty())q.pop();//拼成第二块,且第一块不变，清空队列
+					}
+					q.push(C2);
+				}
+			}
+			//第二块依旧保存，储存
+			if (C1.count == 2){
+				if (InspectButton1(C2) && InspectButton2(C2)){
+					C2.count--;
+					C2.count--;
+					if (InspectButton3(C2)){
+						if (!q.empty())q.pop();//拼成第三块,且第一块第二块不变，清空队列
+					}
+					q.push(C2);
+					return C2;
+				}
+			}
+
+			//printf("%d,", C1.Total.size());
+			//printf("%s\n", C1.Total.c_str());
+		}
+}*/
+
+bool InspectButton1(Cube C){
+	if (C.A[13] == 1 && C.A[14] == 2 && C.A[20] == 5){
+		C.count++;
+		return true;
+	}
+	return false;
+}
+bool InspectButton2(Cube C){
+	if (C.A[15] == 2 && C.A[16] == 3 && C.A[21] == 5){
+		C.count++;
+		return true;
+	}
+	return false;
+}
+bool InspectButton3(Cube C){
+	if (C.A[17] == 3 && C.A[18] == 4 && C.A[23] == 5){
+		C.count++;
+		printf("第三块拼成\n");
+		return true;
+	}
+	return false;
+}
+int main()
+{
+	srand((unsigned int)time(0));
+	Cube C= CreatCube();
+
+	//C = bfs_Button(C);//底面拼好
+
+	ShowCube(C);
+	while (1);
+	return 0;
+}
